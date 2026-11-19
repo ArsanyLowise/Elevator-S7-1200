@@ -6,10 +6,6 @@ A Siemens S7-1200 program for the Factory I/O scene Elevator (Advanced). A box r
 
 ![The elevator scene](elevator-scene.jpg)
 
-![The control panel](control-panel.jpg)
-
-![A plate falling into the box](plate-collection.jpg)
-
 ![The cycle running](demo.gif)
 
 ## What the scene is
@@ -112,8 +108,6 @@ plc/LADDER_networks.md
 tia/FactoryIOElevatorAdvancedV15
 tia/FactoryIOElevatorAdvancedV15_V16
 elevator-scene.jpg
-control-panel.jpg
-plate-collection.jpg
 demo.gif
 ```
 
