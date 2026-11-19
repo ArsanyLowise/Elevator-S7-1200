@@ -126,7 +126,7 @@ demo.gif
 ## Running it
 
 1. Open Factory I/O and load the scene Elevator (Advanced) from the Scenes menu.
-2. In Drivers pick Siemens S7-1200 and set the input and output ranges to the addresses in the table above, twenty digital inputs and thirteen digital outputs.
+2. In Drivers pick Siemens S7-1200 and set the input and output ranges to the addresses in the table above, nineteen digital inputs and sixteen digital outputs.
 3. In TIA Portal import `plc/elevator_tags.csv` as a tag table and add `plc/FB_ElevatorCycle.scl` as an external source file.
 4. Build the block, call it once in OB1 with the mapping from `LADDER_networks.md`, and download to PLCSIM or a real CPU.
 5. Put the selector in automatic, press Start, then switch to Factory I/O and watch the cycle.
