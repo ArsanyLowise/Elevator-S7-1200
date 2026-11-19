@@ -1,0 +1,216 @@
+FUNCTION_BLOCK "FB_ElevatorCycle"
+TITLE = 'Elevator (Advanced) cycle'
+VERSION : 0.1
+AUTHOR : Arsany Lowise
+FAMILY : Factory IO
+
+VAR_INPUT
+   Start         : BOOL;                  // panel start button
+   Stop          : BOOL;                  // panel stop button
+   Reset         : BOOL;                  // panel reset button
+   EStop         : BOOL;                  // panel emergency stop
+   AutoMode      : BOOL;                  // selector, 1 for continuous, 0 for one cycle per start
+   BoxAtEntry    : BOOL;                  // box still on the infeed belt
+   BoxOnElevator : BOOL;                  // box fully on the elevator
+   BoxAtExit     : BOOL;                  // box already on the outfeed belt
+   AtLow         : ARRAY[0..3] OF BOOL;   // level sensor of each floor, lower position
+   AtHigh        : ARRAY[0..3] OF BOOL;   // level sensor of each floor, upper position
+   PlateSeen     : ARRAY[1..3] OF BOOL;   // plate sensor of floors 1 to 3
+END_VAR
+
+VAR_OUTPUT
+   Belt          : ARRAY[0..3] OF BOOL;   // belt of floors 0 to 3
+   BeltExit      : BOOL;
+   BeltElevator  : BOOL;
+   Up            : BOOL;
+   Down          : BOOL;
+   Slow          : BOOL;
+   LampFloor     : ARRAY[1..3] OF BOOL;
+   LampStart     : BOOL;
+   LampStop      : BOOL;
+   LampReset     : BOOL;
+   LampWarning   : BOOL;
+   Run           : BOOL;                  // a cycle is in progress
+   Busy          : BOOL;                  // the elevator is moving
+   Fault         : BOOL;                  // needs a reset
+   PlatesLoaded  : INT;                   // plates pushed into the box so far
+END_VAR
+
+VAR
+   iStep         : INT;
+   iTarget       : INT;
+   iFloor        : INT;
+   iNext         : INT;
+   iPlate        : INT;
+   Schedule      : ARRAY[1..5] OF INT := 1, 2, 3, 2, 1;
+   bStart        : BOOL;
+   bBoxLeft      : BOOL;
+   bPlateHit     : BOOL;
+   tonSettle     : TON_TIME;
+   tonNoBox      : TON_TIME;
+   tonPush       : TON_TIME;
+   tonNoPlate    : TON_TIME;
+   tonUnload     : TON_TIME;
+   tonTravel     : TON_TIME;
+   rtReset       : R_TRIG;
+END_VAR
+
+VAR_TEMP
+   i             : INT;
+END_VAR
+
+BEGIN
+   // Every output is released at the top of the scan, the step that is active
+   // switches on the ones it needs. Nothing can stay energised by accident.
+   FOR #i := 0 TO 3 DO
+      #Belt[#i] := FALSE;
+   END_FOR;
+   #BeltExit := FALSE;
+   #BeltElevator := FALSE;
+   #Up := FALSE;
+   #Down := FALSE;
+   #Slow := FALSE;
+
+   // Panel buttons.
+   #rtReset(CLK := #Reset);
+   IF #Stop THEN
+      #bStart := FALSE;
+   END_IF;
+   IF #EStop THEN
+      #Fault := TRUE;
+      #bStart := FALSE;
+      #iStep := 0;
+   ELSIF #rtReset.Q THEN
+      #Fault := FALSE;
+      #bStart := FALSE;
+      #iStep := 90;
+   ELSIF #Start AND NOT #bStart THEN
+      #bStart := TRUE;
+   END_IF;
+
+   // The plate sensor of the level that is being emptied.
+   IF #iStep = 30 THEN
+      #bPlateHit := #PlateSeen[#iTarget];
+   END_IF;
+
+   // Timers run only inside their own step, so leaving the step clears them.
+   #tonSettle(IN := (#iStep = 10) AND #BoxOnElevator AND NOT #BoxAtEntry, PT := T#700MS);
+   #tonNoBox(IN := (#iStep = 10) AND NOT #BoxOnElevator, PT := T#15S);
+   #tonPush(IN := (#iStep = 30) AND #bPlateHit, PT := T#2S);
+   #tonNoPlate(IN := (#iStep = 30) AND NOT #bPlateHit, PT := T#10S);
+   #tonUnload(IN := (#iStep = 50) AND #bBoxLeft AND NOT #BoxAtExit, PT := T#1S);
+   #tonTravel(IN := (#iStep = 20) OR (#iStep = 90), PT := T#30S);
+
+   CASE #iStep OF
+
+      0:  // idle, waiting for a box and a start command
+         IF #bStart AND NOT #Fault THEN
+            #iStep := 5;
+         END_IF;
+
+      5:  // a new box, the schedule starts again
+         IF #iFloor <> 0 THEN
+            #iTarget := 0;   // a cycle starts from level 0, go there first
+            #iNext := 5;
+            #iStep := 20;
+         ELSE
+            #PlatesLoaded := 0;
+            #iPlate := 1;
+            #bBoxLeft := FALSE;
+            #iTarget := #Schedule[1];
+            #iNext := 30;
+            #iStep := 10;
+         END_IF;
+
+      10: // feed the box from the infeed belt onto the elevator
+         #Belt[0] := TRUE;
+         #BeltElevator := TRUE;
+         IF #tonSettle.Q THEN
+            #iStep := 20;
+         ELSIF #tonNoBox.Q THEN
+            #Fault := TRUE;   // nothing arrived on the belt
+            #iStep := 0;
+         END_IF;
+
+      20: // travel to the level in iTarget
+         IF #iTarget > #iFloor THEN
+            #Up := NOT #AtHigh[#iTarget];
+            #Slow := #AtLow[#iTarget];
+         ELSIF #iTarget < #iFloor THEN
+            #Down := NOT #AtLow[#iTarget];
+            #Slow := #AtHigh[#iTarget];
+         ELSE
+            #iStep := #iNext;
+         END_IF;
+         IF (#iTarget > #iFloor AND #AtHigh[#iTarget])
+         OR (#iTarget < #iFloor AND #AtLow[#iTarget]) THEN
+            #Up := FALSE;
+            #Down := FALSE;
+            #Slow := FALSE;
+            #iFloor := #iTarget;
+            #iStep := #iNext;
+         END_IF;
+
+      30: // push one plate out of that level, it slides down into the box
+         #Belt[#iTarget] := NOT #tonPush.Q;
+         IF #tonPush.Q THEN
+            #PlatesLoaded := #PlatesLoaded + 1;
+            #bPlateHit := FALSE;
+            #iPlate := #iPlate + 1;
+            IF #iPlate > 5 THEN
+               #iTarget := 0;
+               #iNext := 50;
+            ELSE
+               #iTarget := #Schedule[#iPlate];
+               #iNext := 30;
+            END_IF;
+            #iStep := 20;
+         ELSIF #tonNoPlate.Q THEN
+            #Fault := TRUE;   // the level stayed empty
+            #iStep := 0;
+         END_IF;
+
+      50: // the box leaves the elevator on the outfeed belt
+         #BeltElevator := TRUE;
+         #BeltExit := TRUE;
+         IF #BoxAtExit THEN
+            #bBoxLeft := TRUE;
+         END_IF;
+         IF #tonUnload.Q THEN
+            #bBoxLeft := FALSE;
+            IF #AutoMode AND #bStart THEN
+               #iStep := 5;
+            ELSE
+               #bStart := FALSE;
+               #iStep := 0;
+            END_IF;
+         END_IF;
+
+      90: // reset, bring the elevator back to level 0
+         IF #AtLow[0] THEN
+            #iFloor := 0;
+            #iStep := 0;
+         ELSE
+            #Down := TRUE;
+            #Slow := #AtHigh[0];
+         END_IF;
+
+   END_CASE;
+
+   IF #tonTravel.Q THEN
+      #Fault := TRUE;   // a level sensor never answered
+      #iStep := 0;
+   END_IF;
+
+   // Status lamps of the panel.
+   FOR #i := 1 TO 3 DO
+      #LampFloor[#i] := #AtLow[#i] OR #AtHigh[#i];
+   END_FOR;
+   #Run := (#iStep <> 0) AND (#iStep <> 90);
+   #Busy := #Up OR #Down;
+   #LampStart := #Run AND NOT #Fault;
+   #LampStop := NOT #bStart AND NOT #Fault;
+   #LampReset := #Reset;
+   #LampWarning := #EStop OR #Fault;
+
+END_FUNCTION_BLOCK

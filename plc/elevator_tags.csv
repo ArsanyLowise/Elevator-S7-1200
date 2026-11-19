@@ -1,0 +1,36 @@
+Name,Address,Data type,Direction,Comment
+Start,%I1.6,Bool,Input,Panel start button
+Reset,%I1.7,Bool,Input,Panel reset button
+Stop,%I2.0,Bool,Input,Panel stop button
+EStop,%I2.1,Bool,Input,Panel emergency stop
+AutoMode,%I2.2,Bool,Input,Panel selector, 1 automatic
+AtLow0,%I0.6,Bool,Input,At 0 (low)
+AtHigh0,%I0.7,Bool,Input,At 0 (high)
+AtLow1,%I1.0,Bool,Input,At 1 (low)
+AtHigh1,%I1.1,Bool,Input,At 1 (high)
+AtLow2,%I1.2,Bool,Input,At 2 (low)
+AtHigh2,%I1.3,Bool,Input,At 2 (high)
+AtLow3,%I1.4,Bool,Input,At 3 (low)
+AtHigh3,%I1.5,Bool,Input,At 3 (high)
+BoxAtEntry,%I2.4,Bool,Input,Sen. Entrada Elev.
+BoxOnElevator,%I2.5,Bool,Input,Sen. Sobre Elev.
+BoxAtExit,%I2.6,Bool,Input,Sen. Saida Elev.
+PlateSeen1,%I2.7,Bool,Input,Sen. Placa 1
+PlateSeen2,%I3.0,Bool,Input,Sen. Placa 2
+PlateSeen3,%I3.1,Bool,Input,Sen. Placa 3
+Belt0,%Q0.0,Bool,Output,Esteira 0
+Belt1,%Q0.1,Bool,Output,Esteira 1
+Belt2,%Q0.2,Bool,Output,Esteira 2
+Belt3,%Q0.3,Bool,Output,Esteira 3
+BeltExit,%Q0.4,Bool,Output,Esteira saida
+BeltElevator,%Q0.5,Bool,Output,Esteira elevador
+Up,%Q0.7,Bool,Output,Subir
+Down,%Q1.0,Bool,Output,Descer
+Slow,%Q1.1,Bool,Output,Devagar
+LampWarning,%Q1.2,Bool,Output,Warning light
+LampStart,%Q1.3,Bool,Output,Start light
+LampReset,%Q1.4,Bool,Output,Reset light
+LampStop,%Q1.5,Bool,Output,Stop light
+LampFloor1,%Q1.6,Bool,Output,Andar 1
+LampFloor2,%Q1.7,Bool,Output,Andar 2
+LampFloor3,%Q2.0,Bool,Output,Andar 3
