@@ -10,6 +10,8 @@ A Siemens S7-1200 program for the Factory I/O scene Elevator (Advanced). A box r
 
 ![A plate falling into the box](plate-collection.jpg)
 
+![The cycle running](demo.gif)
+
 ## What the scene is
 
 Factory I/O ships this scene with the objective "collect up to five items into a stackable box using an elevator". Empty boxes arrive on the infeed belt at level 0. Three levels above the ground floor each hold plates, and each level can release more than one, so a single cycle picks up five plates in total. When the box is full the elevator comes back to level 0 and the box is carried out on the outfeed belt.
@@ -39,6 +41,12 @@ Five plates are released, three on the way up and two on the way down. Change th
 Two timeouts protect the cycle. If no box reaches the elevator within fifteen seconds the block drops out with a fault, and if the plate sensor of a level stays quiet for ten seconds while its belt runs it also faults. A fault stops the cycle, lights the warning lamp and needs Reset. The travel step has a thirty second watchdog as well.
 
 Stop ends the cycle that is running and holds the next one. Reset clears the fault and faults the elevator back to level 0 with no load. Emergency stop drops every output at once.
+
+## The Ladder document
+
+`LADDER.pdf` is the printable version of the program, in English. It has a title page, the tag table, and then the thirteen networks drawn as Ladder: the call of the block, the outputs released at the top of the scan, the panel buttons, the six timers, one network per step, the travel watchdog and the panel lamps. Contacts, coils, set and reset coils, timer boxes and instruction boxes are drawn the way TIA Portal prints them, and each network carries the same title and comment as the block.
+
+`plc/LADDER_networks.md` is the same document as text, with the OB1 pin to tag mapping, in case you would rather build the networks by hand than import the source file.
 
 ## Panel
 
@@ -97,15 +105,23 @@ The same list is in `plc/elevator_tags.csv`, in the layout TIA Portal expects wh
 ```
 README.md
 ATTRIBUTION.md
-elevator-scene.jpg
-control-panel.jpg
-plate-collection.jpg
+LADDER.pdf
 plc/FB_ElevatorCycle.scl
 plc/elevator_tags.csv
 plc/LADDER_networks.md
+tia/FactoryIOElevatorAdvancedV15
+tia/FactoryIOElevatorAdvancedV15_V16
+elevator-scene.jpg
+control-panel.jpg
+plate-collection.jpg
+demo.gif
 ```
 
-`FB_ElevatorCycle.scl` is an external source file. Add it in TIA Portal under External source files, then generate the block from it. The block needs one instance data block and one call in OB1. `LADDER_networks.md` gives that call as a Ladder network and walks through the rest of the block network by network if you would rather build it by hand.
+`plc/FB_ElevatorCycle.scl` is an external source file. Add it in TIA Portal under External source files, then generate the block from it. The block needs one instance data block and one call in OB1. `plc/LADDER_networks.md` gives that call as a Ladder network and walks through the rest of the block network by network if you would rather build it by hand.
+
+`tia/` holds the project this work started from, exactly as it was published: the same program saved twice, once by TIA Portal V15.1 and once opened and saved by V16. Open the `.ap15_1` or the `.ap16` file inside either folder with File, Open project, and TIA Portal loads it with its own Ladder, data blocks and tag table. That copy is ready to download to PLCSIM and run against the scene with nothing imported. The English block in `plc/` is the rewrite, it is not wired into those archives.
+
+`LADDER.pdf` is the printable English document described above, and `demo.gif` is the scene running.
 
 ## Running it
 
@@ -116,5 +132,7 @@ plc/LADDER_networks.md
 5. Put the selector in automatic, press Start, then switch to Factory I/O and watch the cycle.
 
 The original project pulled in the MHJ-PLC-Lab communication block to reach the simulator. With the built-in S7-1200 driver and PLCSIM you do not need it.
+
+If you only want to see the scene run, skip the import entirely and open `tia/FactoryIOElevatorAdvancedV15_V16/FactoryIOElevatorAdvancedV15_V16.ap16` from the tia folder. That project is complete, and the animation at the top of this page was recorded from it.
 
 The scene itself comes with Factory I/O, so there is nothing to download besides this project.
