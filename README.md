@@ -1,4 +1,4 @@
-# Elevator (Advanced) in TIA Portal
+# Elevator in TIA Portal
 
 A Siemens S7-1200 program for the Factory I/O scene Elevator (Advanced). A box rides the elevator up and down a shaft with four levels, plates are pushed out of the levels and fall into the box, and the full box leaves on the outfeed belt.
 
@@ -124,9 +124,3 @@ demo.gif
 3. In TIA Portal import `plc/elevator_tags.csv` as a tag table and add `plc/FB_ElevatorCycle.scl` as an external source file.
 4. Build the block, call it once in OB1 with the mapping from `LADDER_networks.md`, and download to PLCSIM or a real CPU.
 5. Put the selector in automatic, press Start, then switch to Factory I/O and watch the cycle.
-
-The original project pulled in the MHJ-PLC-Lab communication block to reach the simulator. With the built-in S7-1200 driver and PLCSIM you do not need it.
-
-If you only want to see the scene run, skip the import entirely and open `tia/FactoryIOElevatorAdvancedV15_V16/FactoryIOElevatorAdvancedV15_V16.ap16` from the tia folder. That project is complete, and the animation at the top of this page was recorded from it.
-
-The scene itself comes with Factory I/O, so there is nothing to download besides this project.
